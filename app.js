@@ -1,5 +1,5 @@
 // ===== STATE =====
-const DATA_VERSION = 'v3_momentum_core';
+const DATA_VERSION = 'v4_responsive';
 let models = JSON.parse(localStorage.getItem('wbc_models')) || [];
 let rates = JSON.parse(localStorage.getItem('wbc_rates')) || {...RATES};
 let currentShift = localStorage.getItem('wbc_shift') || 'mañana';
@@ -190,7 +190,7 @@ function renderCommissions() {
     const nextText = c.nextTier ? `Faltan ${fmt(c.faltaParaSiguiente)} para ${fmtCOP(c.nextTier.bonoCOP)} COP` : 'Tier máximo alcanzado 🏆';
 
     container.innerHTML += `
-      <div class="card">
+      <div class="card commission-card">
         <h3 class="card-title"><i class="fas fa-user-tie"></i> ${mon}</h3>
         <div class="projection-stats">
           <div class="proj-item"><div class="proj-label">Facturación Actual</div><div class="proj-value" style="color:var(--gold)">${fmt(c.totalUSD)}</div><div class="proj-sub">${fmtT(c.totalTokens)} tokens</div></div>
@@ -416,35 +416,33 @@ function renderCalculator(){
   mons.forEach(mon => {
     const ml = list.filter(m => m.monitor === mon);
     let modelRows = ml.map(m => `
-      <div style="display:grid;grid-template-columns:1fr 80px 80px 80px 80px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-color);font-size:0.82rem">
-        <span style="font-weight:600;color:var(--purple);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.nickname}">${m.nickname}</span>
-        <input type="number" class="calc-input" data-monitor="${mon}" data-id="${m.id}" data-platform="chaturbate" value="${m.chaturbate||0}" style="padding:5px;border:1px solid var(--border-color);border-radius:4px;text-align:right;font-size:0.78rem;width:100%">
-        <input type="number" class="calc-input" data-monitor="${mon}" data-id="${m.id}" data-platform="stripchat" value="${m.stripchat||0}" style="padding:5px;border:1px solid var(--border-color);border-radius:4px;text-align:right;font-size:0.78rem;width:100%">
-        <input type="number" class="calc-input" data-monitor="${mon}" data-id="${m.id}" data-platform="camsoda" value="${m.camsoda||0}" style="padding:5px;border:1px solid var(--border-color);border-radius:4px;text-align:right;font-size:0.78rem;width:100%">
-        <span class="calc-usd-cell" data-id="${m.id}" style="font-weight:700;text-align:right;font-size:0.82rem">$0</span>
+      <div class="calc-grid-row">
+        <span class="calc-nick" title="${m.nickname}">${m.nickname}</span>
+        <input type="number" class="calc-input" data-monitor="${mon}" data-id="${m.id}" data-platform="chaturbate" value="${m.chaturbate||0}" placeholder="CB">
+        <input type="number" class="calc-input" data-monitor="${mon}" data-id="${m.id}" data-platform="stripchat" value="${m.stripchat||0}" placeholder="SC">
+        <input type="number" class="calc-input" data-monitor="${mon}" data-id="${m.id}" data-platform="camsoda" value="${m.camsoda||0}" placeholder="CS">
+        <span class="calc-usd calc-usd-cell" data-id="${m.id}">$0</span>
       </div>`).join('');
 
     container.innerHTML += `
       <div class="card manual-card">
-        <h3 class="card-title" style="margin-bottom:8px"><i class="fas fa-user-tie"></i> ${mon} — Cálculo Manual</h3>
-        <div style="display:grid;grid-template-columns:1fr 80px 80px 80px 80px;gap:6px;padding-bottom:6px;border-bottom:2px solid var(--purple);font-size:0.68rem;color:var(--text-muted);font-weight:700;text-transform:uppercase">
-          <span>Modelo</span><span style="text-align:right">CB</span><span style="text-align:right">SC</span><span style="text-align:right">CS</span><span style="text-align:right">USD</span>
+        <h3 class="card-title"><i class="fas fa-user-tie"></i> ${mon} — Cálculo Manual</h3>
+        <div class="calc-grid-header">
+          <span>Modelo</span><span>CB</span><span>SC</span><span>CS</span><span>USD</span>
         </div>
         ${modelRows}
-        <div class="manual-result" style="margin-top:14px" id="calcResult-${mon.replace(/[^a-zA-Z]/g,'')}">
-          <div class="result-row"><span>Total USD estimado:</span><span class="calc-total-usd" style="font-weight:700">$0</span></div>
+        <div class="manual-result" id="calcResult-${mon.replace(/[^a-zA-Z]/g,'')}">
+          <div class="result-row"><span>Total USD estimado:</span><span class="calc-total-usd">$0</span></div>
           <div class="result-row"><span>Total Tokens:</span><span class="calc-total-tk">0</span></div>
-          <div class="result-row"><span>Bono estimado:</span><span class="calc-bono" style="font-weight:700;color:var(--green)">—</span></div>
-          <div class="result-row"><span>Siguiente nivel:</span><span class="calc-next" style="font-size:0.82rem">—</span></div>
+          <div class="result-row"><span>Bono estimado:</span><span class="calc-bono">—</span></div>
+          <div class="result-row"><span>Siguiente nivel:</span><span class="calc-next">—</span></div>
         </div>
       </div>`;
   });
 
-  // Live calculation
   container.querySelectorAll('.calc-input').forEach(input => {
     input.addEventListener('input', () => updateCalcResult(input.dataset.monitor));
   });
-  // Initial calc
   mons.forEach(mon => updateCalcResult(mon));
 }
 
