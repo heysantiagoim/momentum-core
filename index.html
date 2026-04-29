@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Momentum Core — Panel de Rendimiento</title>
+  <meta name="description" content="Panel de control de rendimiento empresarial para WBC Agency. Seguimiento de modelos, tokens y ventas.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon"><i class="fas fa-crown"></i></div>
+      <h1>MOMENTUM</h1>
+      <span class="brand-sub">Core Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="dashboard" id="nav-dashboard">
+        <i class="fas fa-chart-line"></i><span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-section="models" id="nav-models">
+        <i class="fas fa-users"></i><span>Modelos</span>
+      </a>
+      <a href="#" class="nav-item" data-section="calculator" id="nav-calculator">
+        <i class="fas fa-calculator"></i><span>Calculadora</span>
+      </a>
+      <a href="#" class="nav-item" data-section="projections" id="nav-projections">
+        <i class="fas fa-chart-bar"></i><span>Proyecciones</span>
+      </a>
+      <a href="#" class="nav-item" data-section="commissions" id="nav-commissions">
+        <i class="fas fa-money-bill-wave"></i><span>Comisiones</span>
+      </a>
+      <a href="#" class="nav-item" data-section="guide" id="nav-guide">
+        <i class="fas fa-book"></i><span>Guía</span>
+      </a>
+      <a href="#" class="nav-item" data-section="settings" id="nav-settings">
+        <i class="fas fa-cog"></i><span>Configuración</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="shift-selector">
+        <label>Turno Activo</label>
+        <select id="shiftSelect">
+          <option value="mañana">☀️ Mañana</option>
+          <option value="tarde">🌤️ Tarde</option>
+          <option value="noche">🌙 Noche</option>
+        </select>
+      </div>
+      <div class="period-selector">
+        <label>Período (5 días)</label>
+        <select id="periodSelect">
+          <option value="1">Período 1 (Días 1-5)</option>
+          <option value="2">Período 2 (Días 6-10)</option>
+          <option value="3">Período 3 (Días 11-15)</option>
+        </select>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+      <div class="topbar-title">
+        <h2 id="sectionTitle">Dashboard</h2>
+        <span class="topbar-badge" id="daysInfo">Día 0 de 15</span>
+        <span class="topbar-date" id="currentDate"></span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" id="btnExport"><i class="fas fa-file-export"></i> Exportar</button>
+        <button class="btn btn-primary" id="btnAddModel"><i class="fas fa-plus"></i> Agregar Modelo</button>
+      </div>
+    </header>
+
+    <!-- DASHBOARD SECTION -->
+    <section class="section" id="section-dashboard">
+      <!-- Tag Gerencial -->
+      <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span class="tag-gerencial"><i class="fas fa-shield-alt"></i> Último Registro Gerencial</span>
+        <span style="font-size:0.78rem;color:var(--text-muted)" id="lastUpdateInfo">Datos verificados por gerencia</span>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="cards-grid">
+        <div class="card summary-card" id="card-total-earnings">
+          <div class="card-icon purple"><i class="fas fa-dollar-sign"></i></div>
+          <div class="card-info">
+            <span class="card-label">Ingresos Totales</span>
+            <span class="card-value" id="totalEarnings">$0</span>
+            <span class="card-sub" id="totalTokens">0 tokens</span>
+          </div>
+        </div>
+        <div class="card summary-card" id="card-avg-performance">
+          <div class="card-icon gold"><i class="fas fa-trophy"></i></div>
+          <div class="card-info">
+            <span class="card-label">Rendimiento Promedio</span>
+            <span class="card-value" id="avgPerformance">0%</span>
+            <span class="card-sub" id="modelsAboveGoal">0 sobre meta</span>
+          </div>
+        </div>
+        <div class="card summary-card" id="card-top-model">
+          <div class="card-icon pink"><i class="fas fa-star"></i></div>
+          <div class="card-info">
+            <span class="card-label">Mejor Modelo</span>
+            <span class="card-value" id="topModelName">—</span>
+            <span class="card-sub" id="topModelEarnings">$0</span>
+          </div>
+        </div>
+        <div class="card summary-card" id="card-active-models">
+          <div class="card-icon cyan"><i class="fas fa-user-check"></i></div>
+          <div class="card-info">
+            <span class="card-label">Modelos Activas</span>
+            <span class="card-value" id="activeModels">0</span>
+            <span class="card-sub" id="modelShiftInfo">Turno mañana</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monitor Performance (dinámico) -->
+      <div class="cards-grid cols-2" id="monitorCards"></div>
+
+      <!-- Charts -->
+      <div class="cards-grid cols-2">
+        <div class="card chart-card">
+          <h3 class="card-title"><i class="fas fa-chart-pie"></i> Distribución por Plataforma</h3>
+          <div class="chart-container"><canvas id="platformChart"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <h3 class="card-title"><i class="fas fa-chart-bar"></i> Rendimiento por Modelo</h3>
+          <div class="chart-container"><canvas id="performanceChart"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODELS TABLE SECTION -->
+    <section class="section hidden" id="section-models">
+      <div class="table-controls">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Buscar modelo..." id="searchInput">
+        </div>
+        <div class="filter-group">
+          <select id="filterMonitor">
+            <option value="all">Todos los monitores</option>
+            <option value="Dani">Dani</option>
+            <option value="Ramón">Ramón</option>
+          </select>
+          <select id="filterPlatform">
+            <option value="all">Todas las plataformas</option>
+            <option value="chaturbate">Chaturbate</option>
+            <option value="stripchat">Stripchat</option>
+            <option value="camsoda">Camsoda</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table" id="modelsTable">
+          <thead>
+            <tr>
+              <th>Nickname</th>
+              <th>Monitor/a</th>
+              <th>Modelo</th>
+              <th>Meta USD</th>
+              <th>Chaturbate</th>
+              <th>Stripchat</th>
+              <th>Camsoda</th>
+              <th>Total USD</th>
+              <th>Porcentaje</th>
+              <th>PDA</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="modelsTableBody"></tbody>
+          <tfoot id="modelsTableFoot"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- PROJECTIONS SECTION -->
+    <section class="section hidden" id="section-projections">
+      <div class="cards-grid cols-2">
+        <div class="card">
+          <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Proyección Mensual</h3>
+          <div class="projection-stats" id="projectionStats"></div>
+        </div>
+        <div class="card chart-card">
+          <h3 class="card-title"><i class="fas fa-chart-area"></i> Tendencia de Ingresos</h3>
+          <div class="chart-container"><canvas id="projectionChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-flag-checkered"></i> Metas vs Resultados por Modelo</h3>
+        <div class="chart-container chart-tall"><canvas id="goalsChart"></canvas></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS SECTION -->
+    <section class="section hidden" id="section-settings">
+      <div class="cards-grid cols-2">
+        <div class="card">
+          <h3 class="card-title"><i class="fas fa-coins"></i> Tasas de Conversión</h3>
+          <div class="settings-form">
+            <div class="form-group">
+              <label>Chaturbate (USD por token)</label>
+              <input type="number" step="0.01" id="rateChaturbate" value="0.05">
+            </div>
+            <div class="form-group">
+              <label>Stripchat (USD por token)</label>
+              <input type="number" step="0.01" id="rateStripchat" value="0.05">
+            </div>
+            <div class="form-group">
+              <label>Camsoda (USD por token)</label>
+              <input type="number" step="0.01" id="rateCamsoda" value="0.04">
+            </div>
+            <button class="btn btn-primary" id="btnSaveRates"><i class="fas fa-save"></i> Guardar Tasas</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="card-title"><i class="fas fa-database"></i> Gestión de Datos</h3>
+          <div class="settings-form">
+            <button class="btn btn-outline" id="btnExportJSON"><i class="fas fa-download"></i> Exportar Datos (JSON)</button>
+            <button class="btn btn-outline" id="btnExportCSV"><i class="fas fa-file-csv"></i> Exportar Datos (CSV)</button>
+            <label class="btn btn-outline" style="cursor:pointer;text-align:center;">
+              <i class="fas fa-upload"></i> Importar Datos (JSON)
+              <input type="file" accept=".json" id="btnImportJSON" style="display:none;">
+            </label>
+            <button class="btn btn-danger" id="btnClearData"><i class="fas fa-trash"></i> Limpiar Todos los Datos</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALCULADORA MANUAL -->
+    <section class="section hidden" id="section-calculator">
+      <div class="card" style="margin-bottom:18px">
+        <h3 class="card-title"><i class="fas fa-calculator"></i> Calculadora Manual del Monitor</h3>
+        <p style="color:var(--text-secondary);font-size:0.84rem">Ingresa tokens aproximados para proyectar comisiones y metas. Estos cálculos son <strong>estimados</strong> y no afectan el Último Registro Gerencial.</p>
+      </div>
+      <div class="cards-grid cols-2" id="manualCalcCards"></div>
+    </section>
+  </main>
+
+  <!-- ADD/EDIT MODEL MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modelModal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Agregar Modelo</h3>
+        <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+      </div>
+      <form id="modelForm" class="modal-body">
+        <input type="hidden" id="editModelId">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nickname</label>
+            <input type="text" id="inputNickname" required placeholder="ej: Anne.cox">
+          </div>
+          <div class="form-group">
+            <label>Nombre Real</label>
+            <input type="text" id="inputRealName" required placeholder="ej: Ana Sofia Ospina">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Monitor/a</label>
+            <select id="inputMonitor" required>
+              <option value="Dani">Dani</option>
+              <option value="Ramón">Ramón</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Meta USD</label>
+            <input type="number" id="inputGoal" required min="0" step="100" placeholder="ej: 1500">
+          </div>
+        </div>
+        <div class="form-row three">
+          <div class="form-group">
+            <label><i class="fas fa-coins"></i> Tokens Chaturbate</label>
+            <input type="number" id="inputChaturbate" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-coins"></i> Tokens Stripchat</label>
+            <input type="number" id="inputStripchat" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-coins"></i> Tokens Camsoda</label>
+            <input type="number" id="inputCamsoda" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Observaciones</label>
+            <textarea id="inputObs" rows="2" placeholder="Notas adicionales..."></textarea>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group checkbox-group">
+            <input type="checkbox" id="inputPDA">
+            <label for="inputPDA">PDA ✔</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="btnCancelModal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveModel">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- COMISIONES SECTION -->
+  <section class="section hidden" id="section-commissions">
+    <div class="card" style="margin-bottom:20px">
+      <h3 class="card-title"><i class="fas fa-money-bill-wave"></i> Sistema de Comisiones — Turno <span id="commShift">Mañana</span></h3>
+      <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:4px">Los bonos se pagan los días <strong>6</strong> o <strong>21</strong> de cada mes. Facturación mínima: <strong>$7,000 USD</strong>.</p>
+    </div>
+
+    <!-- Cards de comisión por monitor (dinámico) -->
+    <div class="cards-grid cols-2" id="commissionCards"></div>
+
+    <!-- Tabla de referencia -->
+    <div class="card" style="margin-top:20px">
+      <h3 class="card-title"><i class="fas fa-table"></i> Tabla de Bonificación</h3>
+      <div class="table-wrapper">
+        <table class="data-table" id="commissionTable">
+          <thead>
+            <tr>
+              <th>Bono COP</th>
+              <th>Facturación USD</th>
+              <th>Total Tokens</th>
+              <th>Prom. por Modelo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="commissionTableBody"></tbody>
+        </table>
+      </div>
+      <div class="guide-content" style="margin-top:16px">
+        <p><strong>⚠️ Reglas importantes:</strong></p>
+        <ul>
+          <li>No entran modelos que salen en quincena o entran a quincena media</li>
+          <li>Si <strong>1 solo modelo</strong> hace el 40% de la facturación total → se baja al bono anterior</li>
+          <li>Si un monitor tiene <strong>9 modelos</strong> en algún punto → todas las facturaciones base suben <strong>$800 USD</strong></li>
+          <li>Capacidad base: <strong>8 modelos</strong>. Por cada modelo faltante: <strong>-$600 USD</strong> del total</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- GUÍA SECTION -->
+  <section class="section hidden" id="section-guide">
+    <div class="card" style="margin-bottom:20px">
+      <h3 class="card-title"><i class="fas fa-info-circle"></i> ¿Cómo funciona este panel?</h3>
+      <div class="guide-content">
+        <p>Este panel de rendimiento de <strong>WBC Agency</strong> permite hacer seguimiento de las ventas de cada modelo en las plataformas <strong>Chaturbate</strong>, <strong>Stripchat</strong> y <strong>Camsoda</strong> durante cada quincena (15 días).</p>
+      </div>
+    </div>
+    <div class="cards-grid cols-2">
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-coins"></i> Conversión de Tokens</h3>
+        <div class="guide-content">
+          <p>Cada plataforma paga diferente por token:</p>
+          <ul>
+            <li><strong>Chaturbate:</strong> 1 token = <span class="highlight">$0.05 USD</span></li>
+            <li><strong>Stripchat:</strong> 1 token = <span class="highlight">$0.05 USD</span></li>
+            <li><strong>Camsoda:</strong> 1 token = <span class="highlight">$0.04 USD</span></li>
+          </ul>
+          <p class="formula">Total USD = (Tokens CB × $0.05) + (Tokens SC × $0.05) + (Tokens CS × $0.04)</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-percentage"></i> Porcentaje de Rendimiento</h3>
+        <div class="guide-content">
+          <p>Mide cuánto ha generado un modelo vs su meta:</p>
+          <p class="formula">Rendimiento = (Total USD Ganado ÷ Meta USD) × 100</p>
+          <ul>
+            <li><span class="badge-green">≥ 100%</span> Cumplió o superó la meta ✅</li>
+            <li><span class="badge-yellow">70-99%</span> Cerca de la meta ⚠️</li>
+            <li><span class="badge-red">< 70%</span> Por debajo de la meta 🔴</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-calendar-check"></i> Períodos de 5 Días</h3>
+        <div class="guide-content">
+          <p>La quincena (15 días) se divide en <strong>3 períodos</strong>:</p>
+          <ul>
+            <li><strong>Período 1:</strong> Días 1 al 5</li>
+            <li><strong>Período 2:</strong> Días 6 al 10</li>
+            <li><strong>Período 3:</strong> Días 11 al 15</li>
+          </ul>
+          <p>El monitor actualiza los tokens de cada modelo al finalizar cada período de 5 días. Esto permite calcular el <strong>promedio diario</strong> y hacer <strong>proyecciones</strong>.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-chart-line"></i> Proyecciones</h3>
+        <div class="guide-content">
+          <p>Las proyecciones estiman los ingresos al cierre de la quincena:</p>
+          <p class="formula">Promedio Diario = Total Actual ÷ Días Transcurridos</p>
+          <p class="formula">Proyección = Promedio Diario × 15 días</p>
+          <p>Ejemplo: Si en 10 días se ganó $5,000 → Promedio = $500/día → Proyección = $7,500</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-trophy"></i> Rendimiento Neto por Monitor</h3>
+        <div class="guide-content">
+          <p>Cada monitor tiene asignado un grupo de modelos. El rendimiento neto del monitor es:</p>
+          <p class="formula">Rend. Neto = (Suma USD de sus modelos ÷ Suma Metas de sus modelos) × 100</p>
+          <p>Un rendimiento neto ≥ 100% indica que el equipo del monitor cumplió la meta global.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title"><i class="fas fa-clock"></i> Turnos</h3>
+        <div class="guide-content">
+          <p>Hay 3 turnos con monitores diferentes:</p>
+          <ul>
+            <li><strong>☀️ Mañana:</strong> Dani y Ramón</li>
+            <li><strong>🌤️ Tarde:</strong> Mónica y Santiago</li>
+            <li><strong>🌙 Noche:</strong> César y Juan</li>
+          </ul>
+          <p>Selecciona el turno en la barra lateral para ver los datos de cada equipo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
