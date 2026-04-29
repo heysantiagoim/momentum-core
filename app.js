@@ -49,6 +49,8 @@ document.querySelectorAll('.nav-item').forEach(item=>{
     if(sec==='projections') renderProjections();
     if(sec==='commissions') renderCommissions();
     if(sec==='calculator') renderCalculator();
+    // Auto-close sidebar on mobile
+    if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
   });
 });
 
